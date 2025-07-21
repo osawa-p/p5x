@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5X ダメージ計算シミュレーション</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg mb-6">
+            <h1 class="text-3xl font-bold mb-2"><i class="fas fa-calculator mr-3"></i>P5X ダメージ計算シミュレーション</h1>
+            <p class="text-blue-100">ペルソナ5 ザ・ロイヤル クロス（P5X）の複雑なダメージ計算を正確にシミュレートします</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Input Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800"><i class="fas fa-sliders-h mr-2"></i>パラメータ入力</h2>
+                
+                <!-- ⓐ 攻撃力計算 -->
+                <div class="mb-6 p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
+                    <h3 class="text-lg font-semibold mb-3 text-red-700">ⓐ 攻撃力計算</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">キャラクター攻撃力値</label>
+                            <input type="number" id="charAttack" value="1200" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">武器攻撃力値</label>
+                            <input type="number" id="weaponAttack" value="600" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">攻撃力% (小数点形式: 0.5 = 50%)</label>
+                            <input type="number" id="attackPercent" value="0.5" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">攻撃力定数</label>
+                            <input type="number" id="attackConstant" value="500" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ⓑ ダメージボーナス計算 -->
+                <div class="mb-6 p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
+                    <h3 class="text-lg font-semibold mb-3 text-orange-700">ⓑ ダメージボーナス計算</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ダメージボーナス (%)</label>
+                            <input type="number" id="damageBonus" value="50" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">属性ダメージボーナス (%)</label>
+                            <input type="number" id="elementBonus" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">敵が受けるダメージ増加 (%)</label>
+                            <input type="number" id="enemyDamageIncrease" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ⓒ 敵防御力計算 -->
+                <div class="mb-6 p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                    <h3 class="text-lg font-semibold mb-3 text-yellow-700">ⓒ 敵防御力計算</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">敵防御力値</label>
+                            <input type="number" id="enemyDefense" value="400" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">追加防御係数 (%)</label>
+                            <input type="number" id="additionalDefense" value="158.3" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">貫通 (%)</label>
+                            <input type="number" id="pierce" value="10" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">防御力減少 (%)</label>
+                            <input type="number" id="defenseReduction" value="80" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="winded" checked class="mr-2 text-yellow-500 focus:ring-yellow-500">
+                                <span class="text-sm font-medium text-gray-700">風習状態（12%減少）</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ⓓ クリティカル計算 -->
+                <div class="mb-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                    <h3 class="text-lg font-semibold mb-3 text-green-700">ⓓ クリティカル計算</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">クリティカル確率 (%)</label>
+                            <input type="number" id="critRate" value="40" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">クリティカル効果 (%)</label>
+                            <input type="number" id="critEffect" value="220" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ⓔ～ⓘ その他係数 -->
+                <div class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                    <h3 class="text-lg font-semibold mb-3 text-blue-700">ⓔ～ⓘ その他係数</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ⓔ スキル係数 (%)</label>
+                            <input type="number" id="skillCoeff" value="120" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ⓕ 弱点係数</label>
+                            <select id="weaknessCoeff" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="0.5">内性 (50%)</option>
+                                <option value="1.0">一般 (100%)</option>
+                                <option value="1.2" selected>弱点 (120%)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ⓖ 最終ダメージボーナス (%)</label>
+                            <input type="number" id="finalBonus" value="40" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">ⓗ その他係数 (%)</label>
+                            <input type="number" id="otherCoeff" value="100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="calculate()" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition duration-300">
+                    <i class="fas fa-calculator mr-2"></i>ダメージを計算
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800"><i class="fas fa-chart-line mr-2"></i>計算結果</h2>
+                
+                <!-- Final Result -->
+                <div class="mb-6 p-6 bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-lg">
+                    <h3 class="text-xl font-bold mb-2">最終ダメージ</h3>
+                    <div class="text-3xl font-bold" id="finalDamage">0 ~ 0</div>
+                    <p class="text-sm opacity-90 mt-2">ランダム範囲係数 (0.95~1.05) を考慮</p>
+                </div>
+
+                <!-- Breakdown -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">計算過程</h3>
+                    
+                    <div class="bg-red-50 p-3 rounded border-l-4 border-red-500">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-red-700">ⓐ 攻撃力計算</span>
+                            <span id="attackResult" class="font-bold text-red-800">0</span>
+                        </div>
+                        <div class="text-sm text-red-600 mt-1" id="attackFormula"></div>
+                    </div>
+
+                    <div class="bg-orange-50 p-3 rounded border-l-4 border-orange-500">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-orange-700">ⓑ ダメージボーナス計算</span>
+                            <span id="bonusResult" class="font-bold text-orange-800">0</span>
+                        </div>
+                        <div class="text-sm text-orange-600 mt-1" id="bonusFormula"></div>
+                    </div>
+
+                    <div class="bg-yellow-50 p-3 rounded border-l-4 border-yellow-500">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-yellow-700">ⓒ 敵防御力計算</span>
+                            <span id="defenseResult" class="font-bold text-yellow-800">0</span>
+                        </div>
+                        <div class="text-sm text-yellow-600 mt-1" id="defenseFormula"></div>
+                    </div>
+
+                    <div class="bg-green-50 p-3 rounded border-l-4 border-green-500">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-green-700">ⓓ クリティカル計算（安定領域）</span>
+                            <span id="critResult" class="font-bold text-green-800">0</span>
+                        </div>
+                        <div class="text-sm text-green-600 mt-1" id="critFormula"></div>
+                    </div>
+
+                    <div class="bg-blue-50 p-3 rounded border-l-4 border-blue-500">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-blue-700">ⓔ～ⓘ その他係数</span>
+                            <span id="otherResults" class="font-bold text-blue-800">0</span>
+                        </div>
+                        <div class="text-sm text-blue-600 mt-1" id="otherFormula"></div>
+                    </div>
+                </div>
+
+                <!-- Chart -->
+                <div class="mt-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">各要素の寄与度</h3>
+                    <div style="height: 300px;">
+                        <canvas id="contributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Reference -->
+        <div class="mt-6 bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800"><i class="fas fa-book mr-2"></i>計算式リファレンス</h2>
+            <div class="bg-gray-50 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                <div class="mb-4">
+                    <strong>最終計算式:</strong><br>
+                    = ⓐ 攻撃力計算 × ⓑ ダメージボーナス計算 × ⓒ 敵防御力計算 × ⓓ クリティカル計算 × ⓔ スキル係数<br>
+                    × ⓕ 弱点係数 × ⓖ 最終ダメージボーナス × ⓗ その他係数 × ⓘ ランダム範囲係数
+                </div>
+                <div class="space-y-2">
+                    <div><strong>ⓐ</strong> = {(キャラクター攻撃力値 + 武器攻撃力値) × 攻撃力% + 攻撃力定数}</div>
+                    <div><strong>ⓑ</strong> = {100% + ダメージボーナス + 属性ダメージボーナス + 敵が受けるダメージ増加}</div>
+                    <div><strong>ⓒ</strong> = 1 - {敵防御力値 × [防御係数] × (100% - 風習12%)} ÷ {敵防御力値 × [防御係数] × (100% - 風習12%) + 1400}</div>
+                    <div class="ml-4"><strong>防御係数</strong> = (100% + 追加防御係数) × (100% - 貫通) - 防御力減少</div>
+                    <div><strong>ⓓ</strong> = {100% + クリティカル確率 × (クリティカル効果 - 100%)} (安定領域)</div>
+                    <div><strong>ⓘ</strong> = 0.95 ~ 1.05 (ランダム)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let contributionChart = null;
+
+        function calculate() {
+            // Get input values
+            const charAttack = parseFloat(document.getElementById('charAttack').value) || 0;
+            const weaponAttack = parseFloat(document.getElementById('weaponAttack').value) || 0;
+            const attackPercent = parseFloat(document.getElementById('attackPercent').value) || 0;
+            const attackConstant = parseFloat(document.getElementById('attackConstant').value) || 0;
+
+            const damageBonus = parseFloat(document.getElementById('damageBonus').value) || 0;
+            const elementBonus = parseFloat(document.getElementById('elementBonus').value) || 0;
+            const enemyDamageIncrease = parseFloat(document.getElementById('enemyDamageIncrease').value) || 0;
+
+            const enemyDefense = parseFloat(document.getElementById('enemyDefense').value) || 0;
+            const additionalDefense = parseFloat(document.getElementById('additionalDefense').value) || 0;
+            const pierce = Math.min(parseFloat(document.getElementById('pierce').value) || 0, 100);
+            const defenseReduction = parseFloat(document.getElementById('defenseReduction').value) || 0;
+            const winded = document.getElementById('winded').checked;
+
+            const critRate = parseFloat(document.getElementById('critRate').value) || 0;
+            const critEffect = parseFloat(document.getElementById('critEffect').value) || 0;
+
+            const skillCoeff = parseFloat(document.getElementById('skillCoeff').value) || 100;
+            const weaknessCoeff = parseFloat(document.getElementById('weaknessCoeff').value) || 1;
+            const finalBonus = parseFloat(document.getElementById('finalBonus').value) || 0;
+            const otherCoeff = parseFloat(document.getElementById('otherCoeff').value) || 100;
+
+            // Calculate ⓐ Attack Power
+            const attackPower = (charAttack + weaponAttack) * (1 + attackPercent) + attackConstant;
+
+            // Calculate ⓑ Damage Bonus
+            const totalDamageBonus = 1 + (damageBonus + elementBonus + enemyDamageIncrease) / 100;
+
+            // Calculate ⓒ Enemy Defense
+            const defenseCoeff = Math.max(0, (1 + additionalDefense/100) * (1 - pierce/100) - defenseReduction/100);
+            const windedMultiplier = winded ? 0.88 : 1;
+            const defenseValue = enemyDefense * defenseCoeff * windedMultiplier;
+            const defenseReductionFactor = 1 - (defenseValue / (defenseValue + 1400));
+
+            // Calculate ⓓ Critical (Stable Domain)
+            const stableCritical = 1 + (critRate/100) * ((critEffect/100) - 1);
+
+            // Calculate other coefficients
+            const skillMultiplier = skillCoeff / 100;
+            const finalBonusMultiplier = 1 + finalBonus / 100;
+            const otherMultiplier = otherCoeff / 100;
+
+            // Calculate final damage
+            const baseDamage = attackPower * totalDamageBonus * defenseReductionFactor * 
+                              stableCritical * skillMultiplier * weaknessCoeff * 
+                              finalBonusMultiplier * otherMultiplier;
+
+            const minDamage = Math.floor(baseDamage * 0.95);
+            const maxDamage = Math.floor(baseDamage * 1.05);
+
+            // Update results
+            document.getElementById('finalDamage').textContent = `${minDamage.toLocaleString()} ~ ${maxDamage.toLocaleString()}`;
+            
+            document.getElementById('attackResult').textContent = attackPower.toFixed(1);
+            document.getElementById('attackFormula').textContent = `(${charAttack} + ${weaponAttack}) × ${(1 + attackPercent).toFixed(2)} + ${attackConstant}`;
+
+            document.getElementById('bonusResult').textContent = totalDamageBonus.toFixed(3);
+            document.getElementById('bonusFormula').textContent = `100% + ${damageBonus}% + ${elementBonus}% + ${enemyDamageIncrease}% = ${(totalDamageBonus * 100).toFixed(1)}%`;
+
+            document.getElementById('defenseResult').textContent = defenseReductionFactor.toFixed(4);
+            document.getElementById('defenseFormula').textContent = `防御係数: ${defenseCoeff.toFixed(3)}, 風習: ${winded ? 'YES' : 'NO'}`;
+
+            document.getElementById('critResult').textContent = stableCritical.toFixed(3);
+            document.getElementById('critFormula').textContent = `100% + ${critRate}% × (${critEffect}% - 100%)`;
+
+            const otherTotal = skillMultiplier * weaknessCoeff * finalBonusMultiplier * otherMultiplier;
+            document.getElementById('otherResults').textContent = otherTotal.toFixed(3);
+            document.getElementById('otherFormula').textContent = `${skillMultiplier.toFixed(2)} × ${weaknessCoeff} × ${finalBonusMultiplier.toFixed(2)} × ${otherMultiplier.toFixed(2)}`;
+
+            // Update chart
+            updateChart([
+                attackPower,
+                totalDamageBonus,
+                defenseReductionFactor,
+                stableCritical,
+                skillMultiplier,
+                weaknessCoeff,
+                finalBonusMultiplier,
+                otherMultiplier
+            ]);
+        }
+
+        function updateChart(values) {
+            const ctx = document.getElementById('contributionChart').getContext('2d');
+            
+            if (contributionChart) {
+                contributionChart.destroy();
+            }
+
+            contributionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['ⓐ攻撃力', 'ⓑダメージボーナス', 'ⓒ敵防御力', 'ⓓクリティカル', 'ⓔスキル係数', 'ⓕ弱点係数', 'ⓖ最終ボーナス', 'ⓗその他'],
+                    datasets: [{
+                        label: '係数値',
+                        data: values,
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(251, 191, 36, 0.7)',
+                            'rgba(34, 197, 94, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(147, 51, 234, 0.7)',
+                            'rgba(236, 72, 153, 0.7)',
+                            'rgba(107, 114, 128, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(251, 191, 36, 1)',
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(147, 51, 234, 1)',
+                            'rgba(236, 72, 153, 1)',
+                            'rgba(107, 114, 128, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '係数値'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Auto-calculate when inputs change
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculate);
+            });
+            calculate(); // Initial calculation
+        });
+    </script>
+</body>
+</html>
